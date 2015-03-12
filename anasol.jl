@@ -1,6 +1,8 @@
 module Anasol
 
 using Distributions
+using Base.Cartesian
+using Metatools
 
 const standardnormal = Distributions.Normal(0, 1)
 
@@ -18,49 +20,27 @@ function coreexpression(dispersionname, dispersiontimedependence, i)
 	end
 end
 
-for i = 1:length(dispersionnames)
-	functionname = string(dispersionnames[i])
-	functionnames = [functionnames; functionname]
-	eval(quote
-		function $(symbol(functionname))(x, tau, v1, sigma1, H1)
-			$(coreexpression(dispersionnames[i], dispersiontimedependence[i], 1))
-			return retval1
-		end
-	end)
-end
-
-for i = 1:length(dispersionnames)
-	for j = 1:length(dispersionnames)
-		functionname = string(dispersionnames[i], dispersionnames[j])
-		functionnames = [functionnames; functionname]
-		eval(quote
-			function $(symbol(functionname))(x::Vector, tau, v1, sigma1, H1, v2, sigma2, H2)
-				$(coreexpression(dispersionnames[i], dispersiontimedependence[i], 1))
-				$(coreexpression(dispersionnames[j], dispersiontimedependence[j], 2))
-				return retval1 * retval2
-			end
-		end)
-	end
-end
-
-for i = 1:length(dispersionnames)
-	for j = 1:length(dispersionnames)
-		for k = 1:length(dispersionnames)
-			functionname = string(dispersionnames[i], dispersionnames[j], dispersionnames[k])
-			functionnames = [functionnames; functionname]
+maxnumberofdimensions = 3
+for n = 1:maxnumberofdimensions
+	bigq = quote
+		@nloops numberofdimensions i k->1:length(dispersionnames) begin
+			@nexprs numberofdimensions j->(coreexprs_j = coreexpression(dispersionnames[i_j], dispersiontimedependence[i_j], j))
+			functionname = string((@ntuple numberofdimensions k->dispersionnames[i_k])...)
 			q = quote
-				function $(symbol(functionname))(x::Vector, tau, v1, sigma1, H1, v2, sigma2, H2, v3, sigma3, H3)
-					$(coreexpression(dispersionnames[i], dispersiontimedependence[i], 1))
-					$(coreexpression(dispersionnames[j], dispersiontimedependence[j], 2))
-					$(coreexpression(dispersionnames[j], dispersiontimedependence[j], 3))
-					return retval1 * retval2 * retval3
-				end
+				$(symbol(functionname))(x::Vector,tau) = 1
 			end
+			returnexpr = parse(mapreduce(i->" * retval$i", *, "return retval1", 2:numberofdimensions))
+			q.args[2].args[2].args[2] = parse(mapreduce(i->" * retval$i", *, "return retval1", 2:numberofdimensions))
+			@nexprs numberofdimensions j->q.args[2].args[2].args = [coreexprs_j; q.args[2].args[2].args]
+			for ii = 1:numberofdimensions
+				q.args[2].args[1].args = [q.args[2].args[1].args; symbol("v$(ii)"); symbol("sigma$(ii)"); symbol("H$(ii)")]
+			end
+			println(q)
 			eval(q)
 		end
 	end
+	Metatools.replacesymbolwithvalue!(bigq, :numberofdimensions, n)
+	eval(bigq)
 end
-
-
 
 end
