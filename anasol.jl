@@ -35,7 +35,6 @@ for n = 1:maxnumberofdimensions
 			for ii = 1:numberofdimensions
 				q.args[2].args[1].args = [q.args[2].args[1].args; symbol("v$(ii)"); symbol("sigma$(ii)"); symbol("H$(ii)")]
 			end
-			println(q)
 			eval(q)
 		end
 	end
