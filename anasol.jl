@@ -95,14 +95,16 @@ for n = 1:maxnumberofdimensions
 					qc = quote
 						function $(symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced)#this function defines the continuous release function
 							#these if statements let quadgk know where the discontinuities are
-							if t - t0 < 0
+							if t - t0 <= 0
 								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t)[1]
-							elseif t - t1 < 0 && inclosedinterval(t - t0, 0, t)
+							elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
 								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0, t)[1]
-							elseif 0 < t - t1 && t - t0 < t
+							elseif 0 <= t - t1 && t - t0 <= t
 								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t1, t - t0, t)[1]
-							elseif inclosedinterval(t - t1, 0, t) && t - t0 > t
+							elseif inclosedinterval(t - t1, 0, t) && t - t0 >= t
 								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t1, t)[1]
+							else
+								error("outside of ifelses: [t, t0, t1] = [$t, $t0, $t1]")
 							end
 						end
 					end
