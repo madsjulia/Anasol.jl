@@ -96,13 +96,16 @@ for n = 1:maxnumberofdimensions
 						function $(symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced)#this function defines the continuous release function
 							#these if statements let quadgk know where the discontinuities are
 							if t - t0 <= 0
-								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t)[1]
+								#we are before the source started...return 0
+								return 0.
 							elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
-								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0, t)[1]
+								#the source has started, but not turned off...we don't need to integrate over (t-t0,t) because nothing has been in the system that long
+								return quadgk(tau::Float64->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0; reltol=1e-7, abstol=1e-4)[1]
 							elseif 0 <= t - t1 && t - t0 <= t
-								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t1, t - t0, t)[1]
+								#the source has started and turned off...we don't need to integrate over (0, t-t1) because everything has been in the system at least that long and we don't need to integrate over (t-t0,t) because nothing has been in the system that long
+								return quadgk(tau::Float64->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), t - t1, t - t0; reltol=1e-7, abstol=1e-4)[1]
 							elseif inclosedinterval(t - t1, 0, t) && t - t0 >= t
-								return quadgk(tau->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t1, t)[1]
+								error("t0 is less than zero, but the code assumes that t0>=0")
 							else
 								error("outside of ifelses: [t, t0, t1] = [$t, $t0, $t1]")
 							end
