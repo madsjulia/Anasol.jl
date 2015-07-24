@@ -120,6 +120,39 @@ for n = 1:maxnumberofdimensions
 					end
 					=#
 					eval(qc)
+					continuousreleaseargs[2] = symbol("tau")
+					qcf = quote
+						function $(symbol(string("long_", shortfunctionname, "_cf")))(thiswillbereplaced)#this function defines the continuous release function
+							#these if statements let quadgk know where the discontinuities are
+							if t - t0 <= 0
+								#we are before the source started...return 0
+								return 0.
+							elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
+								#the source has started, but not turned off...we don't need to integrate over (t-t0,t) because nothing has been in the system that long
+								return quadgk(tau::Float64->sourcestrength(t - tau) * $(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0; reltol=1e-7, abstol=1e-4)[1]
+							elseif 0 <= t - t1 && t - t0 <= t
+								#the source has started and turned off...we don't need to integrate over (0, t-t1) because everything has been in the system at least that long and we don't need to integrate over (t-t0,t) because nothing has been in the system that long
+								return quadgk(tau::Float64->sourcestrength(t - tau) * $(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), t - t1, t - t0; reltol=1e-7, abstol=1e-4)[1]
+							elseif inclosedinterval(t - t1, 0, t) && t - t0 >= t
+								error("t0 is less than zero, but the code assumes that t0>=0")
+							else
+								error("outside of ifelses: [t, t0, t1] = [$t, $t0, $t1]")
+							end
+						end
+					end
+					continuousreleaseargs[2] = symbol("t")
+					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)]#give it the correct set of arguments
+					#now make a version that takes a function for the time-dependence of the source
+					#=
+					if shortfunctionname == "bbb_ddd_iir"
+						println("qck:")
+						println(qck)
+						println("qcf:")
+						println(qcf)
+						println(qcf.args[2].args[1].args)
+					end
+					=#
+					eval(qcf)
 					#now make a version that only includes the necessary arguments
 					fullargs = copy(q.args[2].args[1].args)
 					q.args[2].args[1].args = fullargs[1:3]
