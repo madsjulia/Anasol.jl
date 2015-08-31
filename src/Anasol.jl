@@ -8,7 +8,8 @@ const standardnormal = Distributions.Normal(0, 1)
 
 dispersionnames = ["b", "f"]#b is form brownian motion, f is for fractional brownian motion
 dispersiontimedependence = [s->:(sqrt($(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau)), s->:(sqrt($(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau ^ (2 * $(symbol(string("H", s))))))]
-distributions = ["b"=>:standardnormal, "f"=>:standardnormal]
+#distributions = ["b"=>:standardnormal, "f"=>:standardnormal]
+distributions = Dict(zip(["b"; "f"], [:standardnormal; :standardnormal]))
 sourcenames = ["d", "b"]#d is for distributed (e.g., gaussian or alpha stable), b is for box
 boundarynames = ["i", "r"]#d is for infinite (no boundary), r is for reflecting
 functionnames = []
