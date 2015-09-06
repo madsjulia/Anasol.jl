@@ -64,10 +64,12 @@ for n = 1:maxnumberofdimensions
 					for i = 1:numberofdimensions
 						q.args[2].args[1].args = [q.args[2].args[1].args; symbol("x0$(i)"); symbol("sigma0$(i)"); symbol("v$(i)"); symbol("sigma$(i)"); symbol("H$(i)"); symbol("xb$(i)")]
 					end
+					#=
 					if shortfunctionname == "bbb_bbb_iir"
 						println("q:")
 						println(q)
 					end
+					=#
 					eval(q)#make the function with all possible arguments
 					#now make a version that includes a continuously released source from t0 to t1
 					continuousreleaseargs = [q.args[2].args[1].args[2:end]; symbol("lambda"); symbol("t0"); symbol("t1")]
