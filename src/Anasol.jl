@@ -7,7 +7,7 @@ using MPTools
 const standardnormal = Distributions.Normal(0, 1)
 
 dispersionnames = ["b", "f"]#b is form brownian motion, f is for fractional brownian motion
-dispersiontimedependence = [s->:(sqrt($(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau)), s->:(sqrt($(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau ^ (2 * $(symbol(string("H", s))))))]
+dispersiontimedependence = [(factor, s)->:(sqrt($factor * $(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau)), (factor, s)->:(sqrt($factor * $(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau ^ (2 * $(symbol(string("H", s))))))]
 #distributions = ["b"=>:standardnormal, "f"=>:standardnormal]
 distributions = Dict(zip(["b"; "f"], [:standardnormal; :standardnormal]))
 sourcenames = ["d", "b"]#d is for distributed (e.g., gaussian or alpha stable), b is for box
@@ -18,13 +18,13 @@ function coreexpression(dispersionname, dispersiontimedependence, i, sourcename,
 	q = quote
 		global $(distributions[dispersionname])
 		const $(symbol(string("dist", i))) = $(distributions[dispersionname])
-		$(symbol(string("sigmat", i))) = $(dispersiontimedependence(i))
+		$(symbol(string("sigmat", i))) = $(dispersiontimedependence(sourcename == "b" ? 0 : 1, i))
 		$(symbol(string("retval", i))) = fillintheblank
 	end
 	if sourcename == "d"
 		kernelexpr = :(pdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau) / $(symbol(string("sigmat", i)))) / $(symbol(string("sigmat", i))))
 	elseif sourcename == "b"
-		kernelexpr = :(cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau + .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i)))) - cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau - .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i)))))
+		kernelexpr = :((cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau + .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i)))) - cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau - .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i))))) / $(symbol(string("sigma0", i))))
 	else
 		error("Unknown source type: $sourcename")
 	end
