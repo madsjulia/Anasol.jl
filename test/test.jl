@@ -1,6 +1,31 @@
 import Anasol
-import Mads
+import JLD
 using Base.Test
+
+function contamination(wellx, welly, wellz, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t; anasolfunction=Anasol.long_bbb_ddd_iir_c)
+	d = -theta * pi / 180
+	xshift = wellx - x
+	yshift = welly - y
+	ztrans = wellz - z
+	xtrans = xshift * cos(d) - yshift * sin(d)
+	ytrans = xshift * sin(d) + yshift * cos(d)
+	x01 = x02 = x03 = 0. # we transformed the coordinates so the source starts at the origin
+	#sigma01 = sigma02 = sigma03 = 0.#point source
+	sigma01 = dx
+	sigma02 = dy
+	sigma03 = dz
+	v1 = vx
+	v2 = vy
+	v3 = vz
+	speed = sqrt(vx * vx + vy * vy + vz * vz)
+	sigma1 = sqrt(ax * speed * 2)
+	sigma2 = sqrt(ay * speed * 2)
+	sigma3 = sqrt(az * speed * 2)
+	H1 = H2 = H3 = H
+	xb1 = xb2 = xb3 = 0. # xb1 and xb2 will be ignored, xb3 should be set to 0 (reflecting boundary at z=0)
+	anasolresult = anasolfunction([xtrans, ytrans, ztrans], t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1)
+	return 1e6 * f * anasolresult / n
+end
 
 #test that the *_cf version matches with the *_c version when sourcestrength(t) = (inclosedinterval(t, t0, t1) ? 1. : 0.)
 function testcf()
@@ -56,7 +81,7 @@ function testmonotone(N)
 		for t = linspace(2016, 2035, 20)
 			for j = 1:length(t1s)
 				t1 = t1s[j]
-				results[j] = .5 * (Mads.contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t, usefff) + Mads.contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t, usefff))
+				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t) + contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t))
 			end
 			for j = 1:length(t1s) - 1
 				@test results[j] <= results[j + 1]
@@ -65,5 +90,40 @@ function testmonotone(N)
 	end
 end
 
+#a test using results that were verified against results from the C version of Mads/Anasol
+function testmadsc(anasolfunctionname)
+	anasolfunction = eval(parse("Anasol.$anasolfunctionname"))
+	resultsdir = string(dirname(Base.source_path()), "/goodresults")
+	x, y, z = 1000, 1450, 0
+	porosity = 0.1
+	vx = 30.
+	vz = vy = theta = lambda = 0.
+	ax, ay, az = [70., 15., 0.3]
+	H = 0.5
+	dx, dy, dz = [250., 250., 1.]
+	f = 50.
+	t0, t1 = [5., 15.]
+	wellx, welly, wellz = [823., 1499., 3.]
+	ts = linspace(1., 50., 50)
+	results = Array(Float64, length(ts))
+	for i = 1:length(ts)
+		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
+	end
+	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
+	@test_approx_eq norm(results - goodresults) 0.
+	@show results
+	#=
+	goodresults = Array(Float64, length(ts))
+	for i = 1:length(ts)
+		goodresults[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
+	end
+	@JLD.save "$resultsdir/$anasolfunctionname.jld" goodresults
+	=#
+end
+
 testcf()
 testmonotone(100)
+anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
+for anasolfunctionname in anasolfunctionnames
+	testmadsc(anasolfunctionname)
+end
