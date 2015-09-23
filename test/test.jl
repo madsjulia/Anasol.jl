@@ -110,8 +110,7 @@ function testmadsc(anasolfunctionname)
 		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end
 	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
-	@test_approx_eq norm(results - goodresults) 0.
-	@show results
+	@test_approx_eq_eps norm(results - goodresults) 0. 1e-10
 	#=
 	goodresults = Array(Float64, length(ts))
 	for i = 1:length(ts)
