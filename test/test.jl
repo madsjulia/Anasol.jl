@@ -77,11 +77,12 @@ function testmonotone(N)
 		welly = 0.
 		wellz0 = 3.
 		wellz1 = 3.
-		usefff = false
+		anasolfunction = "long_bbb_ddd_iir_c"
 		for t = linspace(2016, 2035, 20)
 			for j = 1:length(t1s)
 				t1 = t1s[j]
-				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t) + contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t))
+				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t; anasolfunction=anasolfunction) +
+					contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t; anasolfunction=anasolfunction))
 			end
 			for j = 1:length(t1s) - 1
 				@test results[j] <= results[j + 1]
