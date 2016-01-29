@@ -33,7 +33,7 @@ module Anasol
 
 using Distributions
 using Base.Cartesian
-using MPTools
+using MetaProgTools
 
 const standardnormal = Distributions.Normal(0, 1)
 
@@ -60,16 +60,16 @@ function coreexpression(dispersionname, dispersiontimedependence, i, sourcename,
 		error("Unknown source type: $sourcename")
 	end
 	if boundaryname == "i"
-		MPTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
+		MetaProgTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
 	elseif boundaryname == "r"
 		kernelexpr2 = deepcopy(kernelexpr)
-		MPTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
-		MPTools.replacesymbol!(kernelexpr2, :replaceme, :(2 * $(symbol(string("xb", i))) - x[$(i)]))
+		MetaProgTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
+		MetaProgTools.replacesymbol!(kernelexpr2, :replaceme, :(2 * $(symbol(string("xb", i))) - x[$(i)]))
 		kernelexpr = Expr(:call, :+, kernelexpr, kernelexpr2)
 	else
 		error("Unknown boundary condition: $boundaryname")
 	end
-	MPTools.replacesymbol!(q, :fillintheblank, kernelexpr)
+	MetaProgTools.replacesymbol!(q, :fillintheblank, kernelexpr)
 	return q
 end
 
@@ -191,7 +191,7 @@ for n = 1:maxnumberofdimensions
 					q.args[2].args[1].args[1] = symbol(shortfunctionname)
 					for i = 4:length(fullargs)
 						argsymbol = fullargs[i]
-						if MPTools.in(argsymbol, q.args[2].args[2])
+						if MetaProgTools.in(argsymbol, q.args[2].args[2])
 							q.args[2].args[1].args = [q.args[2].args[1].args; argsymbol]
 						end
 					end
@@ -206,7 +206,7 @@ for n = 1:maxnumberofdimensions
 			end
 		end
 	end
-	MPTools.replacesymbol!(bigq, :numberofdimensions, n)
+	MetaProgTools.replacesymbol!(bigq, :numberofdimensions, n)
 	eval(bigq)
 end
 
