@@ -45,6 +45,7 @@ sourcenames = ["d", "b"]#d is for distributed (e.g., gaussian or alpha stable), 
 boundarynames = ["i", "r"]#d is for infinite (no boundary), r is for reflecting
 functionnames = []
 
+"Create core expressions"
 function coreexpression(dispersionname, dispersiontimedependence, i, sourcename, boundaryname)
 	q = quote
 		global $(distributions[dispersionname])
