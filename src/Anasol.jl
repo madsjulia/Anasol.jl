@@ -45,7 +45,7 @@ end
 
 dispersionnames = ["b", "f"] # b is form brownian motion, f is for fractional brownian motion
 sourcenames = ["d", "b"] # d is for distributed (e.g., Gaussian or Levy alpha stable), b is for box
-boundarynames = ["i", "r"] # d is for infinite (no boundary), r is for reflecting
+boundarynames = ["i", "r", "a"] # d is for infinite (no boundary), r is for reflecting
 
 function getdispersions(dispersionnames)
 	f(x) = x == "b" ? :linear : :fractional
