@@ -21,12 +21,12 @@ function kernel_c(x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sig
 	return kernel_c(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, dispersions, sources, boundaries, distributions)
 end
 function kernel_c(dimtype, x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, dispersions, sources, boundaries, distributions=nothing)
-	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1), dispersions, sources, boundaries, distributions)
+	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1) ? 1. : 0., dispersions, sources, boundaries, distributions)
 end
 
 function kernel_cf(x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, sourcestrength::Function, dispersions, sources, boundaries, distributions=nothing)
 	dimtype = Val{length(x)}
-	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1), dispersions, sources, boundaries, distributions)
+	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, sourcestrength, dispersions, sources, boundaries, distributions)
 end
 function kernel_cf(dimtype, x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, sourcestrength::Function, dispersions, sources, boundaries, distributions=nothing)
 	if t - t0 <= 0
