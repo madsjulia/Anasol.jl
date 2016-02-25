@@ -37,5 +37,11 @@ function test()
 	@time for i = 1:10 ^ N Anasol.innerkernel(dim, x, t, x0, sigma0, v, sigma, H, xb, disps, sources, boundaries, distributions) end
 	packedargs = packargs(x0, sigma0, v, sigma, H, xb)
 	@time for i = 1:10 ^ N Anasol.long_bf_db_ir(x, t, 0.0,1.0,1.0,1.0,NaN,NaN,0.0,1.0,0.01,1.0,0.75,0.0) end
+
+	@time for i = 1:10 ^ (N - 2) Anasol.kernel_c(x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, disps, sources, boundaries, distributions) end
+	@time for i = 1:10 ^ (N - 2) Anasol.long_bf_db_ir_c(x, t, 0.0,1.0,1.0,1.0,NaN,NaN,0.0,1.0,0.01,1.0,0.75,0.0, lambda, t0, t1) end
+
+	@time for i = 1:10 ^ (N - 2) Anasol.kernel_cf(x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->exp(-t), disps, sources, boundaries, distributions) end
+	@time for i = 1:10 ^ (N - 2) Anasol.long_bf_db_ir_cf(x, t, 0.0,1.0,1.0,1.0,NaN,NaN,0.0,1.0,0.01,1.0,0.75,0.0, lambda, t0, t1, t->exp(-t)) end
 end
 test()

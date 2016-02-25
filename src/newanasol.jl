@@ -13,18 +13,25 @@ function cinnerkernel(dimtype, x, tau, x0, sigma0, v, sigma, H, xb, lambda, t0, 
 end
 
 function quadgkwithtol(f, a, b)
-	return quadgk(f, a, b; reltol=1.0e-7,abstol=0.0001)[1]
+	return quadgk(f, a, b; reltol=1.0e-7, abstol=1e-4)[1]
 end
 
 function kernel_c(x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, dispersions, sources, boundaries, distributions=nothing)
-	return kernel_cf(x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1), dispersions, sources, boundaries, distributions)
+	dimtype = Val{length(x)}
+	return kernel_c(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, dispersions, sources, boundaries, distributions)
+end
+function kernel_c(dimtype, x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, dispersions, sources, boundaries, distributions=nothing)
+	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1), dispersions, sources, boundaries, distributions)
 end
 
 function kernel_cf(x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, sourcestrength::Function, dispersions, sources, boundaries, distributions=nothing)
 	dimtype = Val{length(x)}
+	return kernel_cf(dimtype, x, t, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t->inclosedinterval(t, t0, t1), dispersions, sources, boundaries, distributions)
+end
+function kernel_cf(dimtype, x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, sourcestrength::Function, dispersions, sources, boundaries, distributions=nothing)
 	if t - t0 <= 0
 		return 0.0
-	elseif t - t1 <= 0 && inclosedinterval(t - t0,0,t)
+	elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
 		return quadgkwithtol(tau->sourcestrength(t - tau) * cinnerkernel(dimtype, x, tau, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t, dispersions, sources, boundaries, distributions), 0, t - t0)
 	elseif 0 <= t - t1 && t - t0 <= t
 		return quadgkwithtol(tau->sourcestrength(t - tau) * cinnerkernel(dimtype, x, tau, x0, sigma0, v, sigma, H, xb, lambda, t0, t1, t, dispersions, sources, boundaries, distributions), t - t1, t - t0)
