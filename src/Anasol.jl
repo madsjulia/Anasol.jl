@@ -35,248 +35,85 @@ using Distributions
 using Base.Cartesian
 using MetaProgTools
 
+include("newanasol.jl")
+
 const standardnormal = Distributions.Normal(0, 1)
-
-"""
-1D analytical solution of contaminant flow with constant-concentration input
-The source is released at x = 0 and t = 0.
-
-Arguments:
-
-	- `x`  : spatial locations
-	- `t`  : times
-	- `c0` : initial (background) concentration
-	- `ci` : input concentration
-	- `aL` : longitudinal dispersion
-	- `u`  : transport velocity
-"""
-function tt1c(x, t; c0 = 0, ci = 1, aL = 1, u = 1)
-	gg = sqrt(1 + 4 * aL / u)
-	ss1 = u * gg
-	ss2 = 4.0 * u * aL
-	st = length(t)
-	sx = length(x)
-	c = Array(Float64, st, sx)
-	for i = 1:st
-		for j = 1:sx
-			t1 = x[j] / aL / 2
-			t2 = gg * t1
-			s1 = ci * exp(t1) / 2
-			s2 = exp(t2)
-			t1 = t[i] * ss1
-			t2 = sqrt(t[i] * ss2)
-			if t2 == 0
-				c[i,j] = c0 + s1 * ((1 - sign(x[j] - t1)) / s2 +
-									(1 - sign(x[j] + t1)) * s2)
-			else
-				c[i,j] = c0 + s1 * (erfc((x[j] - t1) / t2) / s2 +
-									erfc((x[j] + t1) / t2) * s2)
-			end
-		end
-	end
-	return c
-end
-
-"""
-1D analytical solution of contaminant flow with instantaneous mass input
-The source is released at x = 0 and t = 0.
-
-Arguments:
-
-	- `x`  : spatial locations
-	- `t`  : times
-	- `c0` : initial (background) concentration
-	- `m`  : instantaneous mass input
-	- `aL` : longitudinal dispersion
-	- `u`  : transport velocity
-	- `ϕ`  : total (water-filled) porosity
-"""
-function tt1i(x, t; c0 = 0, m = 1, aL = 1, u = 1, ϕ = 0.3)
-	ms = m / (ϕ * sqrt(pi))
-	s = 4.0 * u * aL
-	st = length(t)
-	sx = length(x)
-	c = Array(Float64, st, sx)
-	for i = 1:st
-		for j = 1:sx
-			t1 = t[i] * s;
-			if t1 == 0
-				c[i,j] = c0;
-			else
-				t3 = x[j] - t[i] * u;
-				c[i,j] = c0 + ms / sqrt(t1) * exp(-t3 * t3 / t1 - t[i])
-			end
-		end
-	end
-	return c
-end
-
-dispersionnames = ["b", "f"] # b is form brownian motion, f is for fractional brownian motion
-dispersiontimedependence = [(factor, s)->:(sqrt($factor * $(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau)), (factor, s)->:(sqrt($factor * $(symbol(string("sigma0", s))) ^ 2 + $(symbol(string("sigma", s))) ^ 2 * tau ^ (2 * $(symbol(string("H", s))))))]
-#distributions = ["b"=>:standardnormal, "f"=>:standardnormal]
-distributions = Dict(zip(["b"; "f"], [:standardnormal; :standardnormal]))
-sourcenames = ["d", "b"] # d is for distributed (e.g., Gaussian or Levy alpha stable), b is for box
-boundarynames = ["i", "r"] # d is for infinite (no boundary), r is for reflecting
-functionnames = []
-
-"Create core expressions"
-function coreexpression(dispersionname, dispersiontimedependence, i, sourcename, boundaryname)
-	q = quote
-		global $(distributions[dispersionname])
-		const $(symbol(string("dist", i))) = $(distributions[dispersionname])
-		$(symbol(string("sigmat", i))) = $(dispersiontimedependence(sourcename == "b" ? 0 : 1, i))
-		$(symbol(string("retval", i))) = fillintheblank
-	end
-	if sourcename == "d"
-		kernelexpr = :(pdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau) / $(symbol(string("sigmat", i)))) / $(symbol(string("sigmat", i))))
-	elseif sourcename == "b"
-		kernelexpr = :((cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau + .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i)))) - cdf($(symbol(string("dist", i))), (replaceme - $(symbol(string("x0", i))) - $(symbol(string("v", i))) * tau - .5 * $(symbol(string("sigma0", i)))) / $(symbol(string("sigmat", i))))) / $(symbol(string("sigma0", i))))
-	else
-		error("Unknown source type: $sourcename")
-	end
-	if boundaryname == "i"
-		MetaProgTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
-	elseif boundaryname == "r"
-		kernelexpr2 = deepcopy(kernelexpr)
-		MetaProgTools.replacesymbol!(kernelexpr, :replaceme, :(x[$(i)]))
-		MetaProgTools.replacesymbol!(kernelexpr2, :replaceme, :(2 * $(symbol(string("xb", i))) - x[$(i)]))
-		kernelexpr = Expr(:call, :+, kernelexpr, kernelexpr2)
-	else
-		error("Unknown boundary condition: $boundaryname")
-	end
-	MetaProgTools.replacesymbol!(q, :fillintheblank, kernelexpr)
-	return q
-end
 
 function inclosedinterval(x, a, b)
 	return x >= a && x <= b
 end
 
-shortfunctionnames = []
+dispersionnames = ["b", "f"] # b is form brownian motion, f is for fractional brownian motion
+sourcenames = ["d", "b"] # d is for distributed (e.g., Gaussian or Levy alpha stable), b is for box
+boundarynames = ["i", "r", "a"] # d is for infinite (no boundary), r is for reflecting
+
+function getdispersions(dispersionnames)
+	f(x) = x == "b" ? :linear : :fractional
+	return :(Val{$(map(f, dispersionnames))})
+end
+function getsources(sourcenames)
+	f(x) = x == "b" ? :box : :dispersed
+	return :(Val{$(map(f, sourcenames))})
+end
+function getboundaries(boundarynames)
+	f(x) = x == "i" ? :infinite : x == "r" ? :reflecting : :absorbing
+	return :(Val{$(map(f, boundarynames))})
+end
+
+#the functions defined in this monstrosity of loops are for backwards compatibility
+#use the functions defined in "newanasol.jl" instead
 maxnumberofdimensions = 3
 for n = 1:maxnumberofdimensions
 	bigq = quote
 		@nloops numberofdimensions j ii->1:length(boundarynames) begin
 			@nloops numberofdimensions k ii->1:length(sourcenames) begin
 				@nloops numberofdimensions i ii->1:length(dispersionnames) begin
-					@nexprs numberofdimensions ii->(coreexprs_ii = coreexpression(dispersionnames[i_ii], dispersiontimedependence[i_ii], ii, sourcenames[k_ii], boundarynames[j_ii]))
 					shortfunctionname = string((@ntuple numberofdimensions ii->dispersionnames[i_ii])..., "_", (@ntuple numberofdimensions ii->sourcenames[k_ii])..., "_", (@ntuple numberofdimensions ii->boundarynames[j_ii])...)
-					shortfunctionnames = [shortfunctionnames; shortfunctionname]
 					q = quote
 						$(symbol(string("long_", shortfunctionname)))(x::Vector,tau) = 1
 					end
-					q.args[2].args[2].args[2] = parse(mapreduce(i->" * retval$i", *, "return retval1", 2:numberofdimensions))
-					@nexprs numberofdimensions ii->q.args[2].args[2].args = [coreexprs_ii; q.args[2].args[2].args]
+					x0s = parse(string("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
+					sigma0s = parse(string("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
+					vs = parse(string("[", join(map(i->"v$i", 1:numberofdimensions), ",")..., "]"))
+					sigmas = parse(string("[", join(map(i->"sigma$i", 1:numberofdimensions), ",")..., "]"))
+					Hs = parse(string("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
+					xbs = parse(string("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
+					dispersions = getdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
+					sources = getsources(@ntuple numberofdimensions ii->sourcenames[k_ii])
+					boundaries = getboundaries(@ntuple numberofdimensions ii->boundarynames[j_ii])
+					q.args[2].args[2].args[2] = :(innerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, $dispersions, $sources, $boundaries, nothing))
 					for i = 1:numberofdimensions
 						q.args[2].args[1].args = [q.args[2].args[1].args; symbol("x0$(i)"); symbol("sigma0$(i)"); symbol("v$(i)"); symbol("sigma$(i)"); symbol("H$(i)"); symbol("xb$(i)")]
 					end
-					#=
-					if shortfunctionname == "bbb_bbb_iir"
-						println("q:")
-						println(q)
-					end
-					=#
 					eval(q)# make the function with all possible arguments
 					# now make a version that includes a continuously released source from t0 to t1
 					continuousreleaseargs = [q.args[2].args[1].args[2:end]; symbol("lambda"); symbol("t0"); symbol("t1")]
 					# start by making the kernel of the time integral
 					qck = quote
 						function $(symbol(string("long_", shortfunctionname, "_ckernel")))(thiswillbereplaced) # this function defines the kernel that the continuous release function integrates against
-							if inclosedinterval(t - tau, t0, t1)
-								retval = exp(-lambda * tau) * $(symbol(string("long_", shortfunctionname)))($((q.args[2].args[1].args[2:end])...))
-								return retval
-							else
-								return 0.
-							end
+							return cinnerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, t, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
 					qck.args[2].args[1].args = [qck.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; symbol("t")] # give it the correct set of arguments
-					#=
-					if shortfunctionname == "bbb_ddd_iir"
-						println("qck:")
-						println(qck)
-					end
-					=#
 					eval(qck) # evaluate the kernel function definition
 					# now make a function that integrates the kernel
 					qc = quote
 						function $(symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced) # this function defines the continuous release function
-							# these if statements let quadgk know where the discontinuities are
-							if t - t0 <= 0
-								# we are before the source started...return 0
-								return 0.
-							elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
-								# the source has started, but not turned off...we don't need to integrate over (t-t0,t) because nothing has been in the system that long
-								return quadgk(tau::Float64->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0; reltol=1e-7, abstol=1e-4)[1]
-							elseif 0 <= t - t1 && t - t0 <= t
-								# the source has started and turned off...we don't need to integrate over (0, t-t1) because everything has been in the system at least that long and we don't need to integrate over (t-t0,t) because nothing has been in the system that long
-								return quadgk(tau::Float64->$(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), t - t1, t - t0; reltol=1e-7, abstol=1e-4)[1]
-							elseif inclosedinterval(t - t1, 0, t) && t - t0 >= t
-								error("t0 is less than zero, but the code assumes that t0>=0")
-							else
-								error("outside of ifelses: [t, t0, t1] = [$t, $t0, $t1]")
-							end
+							return kernel_c(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
 					continuousreleaseargs[2] = symbol("t")
 					qc.args[2].args[1].args = [qc.args[2].args[1].args[1]; continuousreleaseargs[1:end]...] # give it the correct set of arguments
-					#=
-					if shortfunctionname == "bbb_ddd_iir"
-						println("qc:")
-						println(qc)
-					end
-					=#
 					eval(qc)
 					continuousreleaseargs[2] = symbol("tau")
 					qcf = quote
 						function $(symbol(string("long_", shortfunctionname, "_cf")))(thiswillbereplaced) # this function defines the continuous release function
-							#these if statements let quadgk know where the discontinuities are
-							if t - t0 <= 0
-								# we are before the source started...return 0
-								return 0.
-							elseif t - t1 <= 0 && inclosedinterval(t - t0, 0, t)
-								# the source has started, but not turned off...we don't need to integrate over (t-t0,t) because nothing has been in the system that long
-								return quadgk(tau::Float64->sourcestrength(t - tau) * $(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), 0, t - t0; reltol=1e-7, abstol=1e-4)[1]
-							elseif 0 <= t - t1 && t - t0 <= t
-								# the source has started and turned off...we don't need to integrate over (0, t-t1) because everything has been in the system at least that long and we don't need to integrate over (t-t0,t) because nothing has been in the system that long
-								return quadgk(tau::Float64->sourcestrength(t - tau) * $(symbol(string("long_", shortfunctionname, "_ckernel")))($([continuousreleaseargs[1:end]...; symbol("t")]...)), t - t1, t - t0; reltol=1e-7, abstol=1e-4)[1]
-							elseif inclosedinterval(t - t1, 0, t) && t - t0 >= t
-								error("t0 is less than zero, but the code assumes that t0>=0")
-							else
-								error("outside of ifelses: [t, t0, t1] = [$t, $t0, $t1]")
-							end
+							return kernel_cf(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, sourcestrength, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
 					continuousreleaseargs[2] = symbol("t")
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
-					# now make a version that takes a function for the time-dependence of the source
-					#=
-					if shortfunctionname == "bbb_ddd_iir"
-						println("qck:")
-						println(qck)
-						println("qcf:")
-						println(qcf)
-						println(qcf.args[2].args[1].args)
-					end
-					=#
 					eval(qcf)
-					# now make a version that only includes the necessary arguments
-					fullargs = copy(q.args[2].args[1].args)
-					q.args[2].args[1].args = fullargs[1:3]
-					q.args[2].args[1].args[1] = symbol(shortfunctionname)
-					for i = 4:length(fullargs)
-						argsymbol = fullargs[i]
-						if MetaProgTools.in(argsymbol, q.args[2].args[2])
-							q.args[2].args[1].args = [q.args[2].args[1].args; argsymbol]
-						end
-					end
-					#=
-					if shortfunctionname == "bbb_ddd_iir"
-						println("qgoodargs:")
-						println(q)
-					end
-					=#
-					eval(q) # make the function with only the necessary arguments
 				end
 			end
 		end

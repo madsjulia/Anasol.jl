@@ -126,3 +126,4 @@ anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
 for anasolfunctionname in anasolfunctionnames
 	testmadsc(anasolfunctionname)
 end
+include("newtest.jl")
