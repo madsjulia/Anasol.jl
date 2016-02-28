@@ -1,11 +1,11 @@
 Anasol (Analytical solutions for groundwater contaminant transport)
 =======================================
 
-[![Anasol](http://pkg.julialang.org/badges/Anasol_0.4.svg)](http://pkg.julialang.org/?pkg=Mads&ver=0.4)
+[![Anasol](http://pkg.julialang.org/badges/Anasol_0.4.svg)](http://pkg.julialang.org/?pkg=Anasol&ver=0.4)
 
-[![Build Status](https://travis-ci.org/JuliaLang/Anasol.jl.svg?branch=master)](https://travis-ci.org/JuliaLang/Mads.jl)
+[![Build Status](https://travis-ci.org/madsjulia/Anasol.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Anasol.jl)
 
-[![Coverage Status](https://coveralls.io/repos/JuliaLang/Anasol.jl/badge.svg?branch=master)](https://coveralls.io/r/JuliaLang/Mads.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/madsjulia/Anasol.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Anasol.jl?branch=master)
 
 Anasol is a module of MADS. MADS (Model Analysis & Decision Support) is an open-source [Julia](http://julialang.org) code designed as an integrated high-performance computational framework performing a wide range of model-based analyses:
 
