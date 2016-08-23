@@ -70,7 +70,7 @@ for n = 1:maxnumberofdimensions
 				@nloops numberofdimensions i ii->1:length(dispersionnames) begin
 					shortfunctionname = string((@ntuple numberofdimensions ii->dispersionnames[i_ii])..., "_", (@ntuple numberofdimensions ii->sourcenames[k_ii])..., "_", (@ntuple numberofdimensions ii->boundarynames[j_ii])...)
 					q = quote
-						$(symbol(string("long_", shortfunctionname)))(x::Vector,tau) = 1
+						$(Symbol(string("long_", shortfunctionname)))(x::Vector,tau) = 1
 					end
 					x0s = parse(string("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
 					sigma0s = parse(string("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
@@ -83,35 +83,35 @@ for n = 1:maxnumberofdimensions
 					boundaries = getboundaries(@ntuple numberofdimensions ii->boundarynames[j_ii])
 					q.args[2].args[2].args[2] = :(innerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, $dispersions, $sources, $boundaries, nothing))
 					for i = 1:numberofdimensions
-						q.args[2].args[1].args = [q.args[2].args[1].args; symbol("x0$(i)"); symbol("sigma0$(i)"); symbol("v$(i)"); symbol("sigma$(i)"); symbol("H$(i)"); symbol("xb$(i)")]
+						q.args[2].args[1].args = [q.args[2].args[1].args; Symbol("x0$(i)"); Symbol("sigma0$(i)"); Symbol("v$(i)"); Symbol("sigma$(i)"); Symbol("H$(i)"); Symbol("xb$(i)")]
 					end
 					eval(q)# make the function with all possible arguments
 					# now make a version that includes a continuously released source from t0 to t1
-					continuousreleaseargs = [q.args[2].args[1].args[2:end]; symbol("lambda"); symbol("t0"); symbol("t1")]
+					continuousreleaseargs = [q.args[2].args[1].args[2:end]; Symbol("lambda"); Symbol("t0"); Symbol("t1")]
 					# start by making the kernel of the time integral
 					qck = quote
-						function $(symbol(string("long_", shortfunctionname, "_ckernel")))(thiswillbereplaced) # this function defines the kernel that the continuous release function integrates against
+						function $(Symbol(string("long_", shortfunctionname, "_ckernel")))(thiswillbereplaced) # this function defines the kernel that the continuous release function integrates against
 							return cinnerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, t, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
-					qck.args[2].args[1].args = [qck.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; symbol("t")] # give it the correct set of arguments
+					qck.args[2].args[1].args = [qck.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; Symbol("t")] # give it the correct set of arguments
 					eval(qck) # evaluate the kernel function definition
 					# now make a function that integrates the kernel
 					qc = quote
-						function $(symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced) # this function defines the continuous release function
+						function $(Symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced) # this function defines the continuous release function
 							return kernel_c(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
-					continuousreleaseargs[2] = symbol("t")
+					continuousreleaseargs[2] = Symbol("t")
 					qc.args[2].args[1].args = [qc.args[2].args[1].args[1]; continuousreleaseargs[1:end]...] # give it the correct set of arguments
 					eval(qc)
-					continuousreleaseargs[2] = symbol("tau")
+					continuousreleaseargs[2] = Symbol("tau")
 					qcf = quote
-						function $(symbol(string("long_", shortfunctionname, "_cf")))(thiswillbereplaced) # this function defines the continuous release function
+						function $(Symbol(string("long_", shortfunctionname, "_cf")))(thiswillbereplaced) # this function defines the continuous release function
 							return kernel_cf(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, sourcestrength, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
-					continuousreleaseargs[2] = symbol("t")
+					continuousreleaseargs[2] = Symbol("t")
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 				end

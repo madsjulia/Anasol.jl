@@ -69,7 +69,7 @@ end
 function distributionexprs(distributions::Type{Void}, dimensions::Int)
 	distexprs = Array(Expr, dimensions)
 	for i = 1:dimensions
-		distexprs[i] = :(const $(symbol(string("dist", i))) = Anasol.standardnormal)
+		distexprs[i] = :(const $(Symbol(string("dist", i))) = Anasol.standardnormal)
 	end
 	return distexprs
 end
@@ -77,13 +77,13 @@ end
 function distributionexprs(distributions, dimensions)
 	distexprs = Array(Expr, dimensions)
 	for i = 1:dimensions
-		distexprs[i] = :(const $(symbol(string("dist", i))) = distributions[$i])
+		distexprs[i] = :(const $(Symbol(string("dist", i))) = distributions[$i])
 	end
 	return distexprs
 end
 
 function symbolindex(s, i::Int)
-	return symbol(string(s, i))
+	return Symbol(string(s, i))
 end
 
 function getinitdispersionfactor(sourcetype, i::Int)
