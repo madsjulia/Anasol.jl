@@ -1,5 +1,8 @@
 __precompile__()
 
+import Compat
+import Compat.String
+
 """
 MADS: Model Analysis & Decision Support in Julia (Mads.jl v1.0) 2016
 
@@ -68,16 +71,16 @@ for n = 1:maxnumberofdimensions
 		@nloops numberofdimensions j ii->1:length(boundarynames) begin
 			@nloops numberofdimensions k ii->1:length(sourcenames) begin
 				@nloops numberofdimensions i ii->1:length(dispersionnames) begin
-					shortfunctionname = string((@ntuple numberofdimensions ii->dispersionnames[i_ii])..., "_", (@ntuple numberofdimensions ii->sourcenames[k_ii])..., "_", (@ntuple numberofdimensions ii->boundarynames[j_ii])...)
+					shortfunctionname = String((@ntuple numberofdimensions ii->dispersionnames[i_ii])..., "_", (@ntuple numberofdimensions ii->sourcenames[k_ii])..., "_", (@ntuple numberofdimensions ii->boundarynames[j_ii])...)
 					q = quote
-						$(Symbol(string("long_", shortfunctionname)))(x::Vector,tau) = 1
+						$(Symbol(String("long_", shortfunctionname)))(x::Vector,tau) = 1
 					end
-					x0s = parse(string("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
-					sigma0s = parse(string("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
-					vs = parse(string("[", join(map(i->"v$i", 1:numberofdimensions), ",")..., "]"))
-					sigmas = parse(string("[", join(map(i->"sigma$i", 1:numberofdimensions), ",")..., "]"))
-					Hs = parse(string("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
-					xbs = parse(string("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
+					x0s = parse(String("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
+					sigma0s = parse(String("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
+					vs = parse(String("[", join(map(i->"v$i", 1:numberofdimensions), ",")..., "]"))
+					sigmas = parse(String("[", join(map(i->"sigma$i", 1:numberofdimensions), ",")..., "]"))
+					Hs = parse(String("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
+					xbs = parse(String("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
 					dispersions = getdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
 					sources = getsources(@ntuple numberofdimensions ii->sourcenames[k_ii])
 					boundaries = getboundaries(@ntuple numberofdimensions ii->boundarynames[j_ii])
@@ -90,7 +93,7 @@ for n = 1:maxnumberofdimensions
 					continuousreleaseargs = [q.args[2].args[1].args[2:end]; Symbol("lambda"); Symbol("t0"); Symbol("t1")]
 					# start by making the kernel of the time integral
 					qck = quote
-						function $(Symbol(string("long_", shortfunctionname, "_ckernel")))(thiswillbereplaced) # this function defines the kernel that the continuous release function integrates against
+						function $(Symbol(String("long_", shortfunctionname, "_ckernel")))(thiswillbereplaced) # this function defines the kernel that the continuous release function integrates against
 							return cinnerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, t, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
@@ -98,7 +101,7 @@ for n = 1:maxnumberofdimensions
 					eval(qck) # evaluate the kernel function definition
 					# now make a function that integrates the kernel
 					qc = quote
-						function $(Symbol(string("long_", shortfunctionname, "_c")))(thiswillbereplaced) # this function defines the continuous release function
+						function $(Symbol(String("long_", shortfunctionname, "_c")))(thiswillbereplaced) # this function defines the continuous release function
 							return kernel_c(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
@@ -107,7 +110,7 @@ for n = 1:maxnumberofdimensions
 					eval(qc)
 					continuousreleaseargs[2] = Symbol("tau")
 					qcf = quote
-						function $(Symbol(string("long_", shortfunctionname, "_cf")))(thiswillbereplaced) # this function defines the continuous release function
+						function $(Symbol(String("long_", shortfunctionname, "_cf")))(thiswillbereplaced) # this function defines the continuous release function
 							return kernel_cf(x, t, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, lambda, t0, t1, sourcestrength, $dispersions, $sources, $boundaries, nothing)
 						end
 					end
