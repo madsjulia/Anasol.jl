@@ -53,7 +53,7 @@ end
 #tests that if we run the source longer, the concentrations increase
 function testmonotone(N)
 	t1s = collect(2015:5:2030)
-	results = Array(Float64, length(t1s))
+	results = Array{Float64}(length(t1s))
 	for i = 1:N
 		n = 0.1
 		lambda = 0.
@@ -105,14 +105,14 @@ function testmadsc(anasolfunctionname)
 	t0, t1 = [5., 15.]
 	wellx, welly, wellz = [823., 1499., 3.]
 	ts = linspace(1., 50., 50)
-	results = Array(Float64, length(ts))
+	results = Array{Float64}(length(ts))
 	for i = 1:length(ts)
 		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end
 	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
 	@test_approx_eq_eps norm(results - goodresults) 0. 1e-10
 	#=
-	goodresults = Array(Float64, length(ts))
+	goodresults = Array{Float64}(length(ts))
 	for i = 1:length(ts)
 		goodresults[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end

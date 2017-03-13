@@ -14,7 +14,7 @@ function test()
 	t1 = 1.
 	lambda = 0.1
 	function packargs(args...)
-		returnargs = Array(Float64, length(args[1]) * length(args))
+		returnargs = Array{Float64}(length(args[1]) * length(args))
 		for i = 1:length(args)
 			for j = 1:length(args[1])
 				returnargs[i + (j - 1) * length(args)] = args[i][j]
