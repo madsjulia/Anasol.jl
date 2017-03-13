@@ -3,7 +3,7 @@ os:
   - osx
   - linux
 julia:
-  - 0.4
+  - 0.5
 notifications:
   email: false
 script:
@@ -11,4 +11,4 @@ script:
   - julia -e 'Pkg.clone(pwd()); Pkg.build("Anasol"); Pkg.test("Anasol"; coverage=true)';
 after_success:
   - julia -e 'cd(Pkg.dir("Anasol")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
-  - julia -e 'cd(joinpath(Pkg.dir("Anasol"), "src")); run(`bash -c "rm -f *.cov"`)' 
+  - julia -e 'cd(joinpath(Pkg.dir("Anasol"), "src")); run(`bash -c "rm -f *.cov"`)'
