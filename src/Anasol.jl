@@ -1,5 +1,6 @@
 __precompile__()
 
+import QuadGK
 import Compat
 import Compat.string
 
