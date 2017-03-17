@@ -127,3 +127,5 @@ for anasolfunctionname in anasolfunctionnames
 	testmadsc(anasolfunctionname)
 end
 include("newtest.jl")
+
+:passed
