@@ -1,8 +1,25 @@
 import Anasol
 import JLD
-using Base.Test
+import Base.Test
 
-function contamination(wellx, welly, wellz, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t; anasolfunction=Anasol.long_bbb_ddd_iir_c)
+if !isdefined(Symbol("@stderrcapture"))
+	macro stderrcapture(block)
+		quote
+			if ccall(:jl_generating_output, Cint, ()) == 0
+				errororiginal = STDERR;
+				(errR, errW) = redirect_stderr();
+				errorreader = @async readstring(errR);
+				evalvalue = $(esc(block))
+				redirect_stderr(errororiginal);
+				close(errW);
+				close(errR);
+				return evalvalue
+			end
+		end
+	end
+end
+
+@stderrcapture function contamination(wellx, welly, wellz, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t; anasolfunction=Anasol.long_bbb_ddd_iir_c)
 	d = -theta * pi / 180
 	xshift = wellx - x
 	yshift = welly - y
@@ -27,8 +44,37 @@ function contamination(wellx, welly, wellz, n, lambda, theta, vx, vy, vz, ax, ay
 	return 1e6 * f * anasolresult / n
 end
 
-#test that the *_cf version matches with the *_c version when sourcestrength(t) = (inclosedinterval(t, t0, t1) ? 1. : 0.)
-function testcf()
+#a test using results that were verified against results from the C version of Mads/Anasol
+@stderrcapture function testmadsc(anasolfunctionname)
+	anasolfunction = eval(parse("Anasol.$anasolfunctionname"))
+	resultsdir = string(dirname(Base.source_path()), "/goodresults")
+	x, y, z = 1000, 1450, 0
+	porosity = 0.1
+	vx = 30.
+	vz = vy = theta = lambda = 0.
+	ax, ay, az = [70., 15., 0.3]
+	H = 0.5
+	dx, dy, dz = [250., 250., 1.]
+	f = 50.
+	t0, t1 = [5., 15.]
+	wellx, welly, wellz = [823., 1499., 3.]
+	ts = linspace(1., 50., 50)
+	results = Array{Float64}(length(ts))
+	for i = 1:length(ts)
+		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
+	end
+	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
+	return norm(results - goodresults)
+	#=
+	goodresults = Array{Float64}(length(ts))
+	for i = 1:length(ts)
+		goodresults[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
+	end
+	@JLD.save "$resultsdir/$anasolfunctionname.jld" goodresults
+	=#
+end
+
+@Base.Test.testset "Anasol" begin
 	x01, x02, x03 = 5., 3.14, 2.72
 	x0 = [x01, x02, x03]
 	sigma01, sigma02, sigma03 = 1., 10., .1
@@ -45,16 +91,13 @@ function testcf()
 	for t in ts
 		for i = 1:1000
 			x = x0 + v * t + 10 * randn(length(x0))
-			@test Anasol.long_bbb_ddd_iir_cf(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1, sourcestrength) == Anasol.long_bbb_ddd_iir_c(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1)
+			@Base.Test.test Anasol.long_bbb_ddd_iir_cf(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1, sourcestrength) == Anasol.long_bbb_ddd_iir_c(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1)
 		end
 	end
-end
 
-#tests that if we run the source longer, the concentrations increase
-function testmonotone(N)
 	t1s = collect(2015:5:2030)
 	results = Array{Float64}(length(t1s))
-	for i = 1:N
+	for i = 1:100
 		n = 0.1
 		lambda = 0.
 		theta = 0.
@@ -84,48 +127,16 @@ function testmonotone(N)
 					contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t))
 			end
 			for j = 1:length(t1s) - 1
-				@test results[j] <= results[j + 1]
+				@Base.Test.test results[j] <= results[j + 1]
 			end
 		end
 	end
-end
 
-#a test using results that were verified against results from the C version of Mads/Anasol
-function testmadsc(anasolfunctionname)
-	anasolfunction = eval(parse("Anasol.$anasolfunctionname"))
-	resultsdir = string(dirname(Base.source_path()), "/goodresults")
-	x, y, z = 1000, 1450, 0
-	porosity = 0.1
-	vx = 30.
-	vz = vy = theta = lambda = 0.
-	ax, ay, az = [70., 15., 0.3]
-	H = 0.5
-	dx, dy, dz = [250., 250., 1.]
-	f = 50.
-	t0, t1 = [5., 15.]
-	wellx, welly, wellz = [823., 1499., 3.]
-	ts = linspace(1., 50., 50)
-	results = Array{Float64}(length(ts))
-	for i = 1:length(ts)
-		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
+	anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
+	for anasolfunctionname in anasolfunctionnames
+		@Base.Test.test_approx_eq_eps testmadsc(anasolfunctionname) 0. 1e-10
 	end
-	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
-	@test_approx_eq_eps norm(results - goodresults) 0. 1e-10
-	#=
-	goodresults = Array{Float64}(length(ts))
-	for i = 1:length(ts)
-		goodresults[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
-	end
-	@JLD.save "$resultsdir/$anasolfunctionname.jld" goodresults
-	=#
+	include("newtest.jl")
 end
-
-testcf()
-testmonotone(100)
-anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
-for anasolfunctionname in anasolfunctionnames
-	testmadsc(anasolfunctionname)
-end
-include("newtest.jl")
 
 :passed
