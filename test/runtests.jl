@@ -134,7 +134,7 @@ end
 
 	anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
 	for anasolfunctionname in anasolfunctionnames
-		@Base.Test.test_approx_eq_eps testmadsc(anasolfunctionname) 0. 1e-10
+		@Base.Test.test isapprox(testmadsc(anasolfunctionname), 0.; atol=1e-10)
 	end
 	include("newtest.jl")
 end
