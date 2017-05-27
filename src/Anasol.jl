@@ -47,6 +47,7 @@ function inclosedinterval(x, a, b)
 	return x >= a && x <= b
 end
 
+axisnames = ["X", "Y", "Z"]
 dispersionnames = ["b", "f"] # b is form brownian motion, f is for fractional brownian motion
 sourcenames = ["d", "b"] # d is for distributed (e.g., Gaussian or Levy alpha stable), b is for box
 boundarynames = ["i", "r", "a"] # d is for infinite (no boundary), r is for reflecting
@@ -62,6 +63,31 @@ end
 function getboundaries(boundarynames)
 	f(x) = x == "i" ? :infinite : x == "r" ? :reflecting : :absorbing
 	return :(Val{$(map(f, boundarynames))})
+end
+
+function getlongdispersions(dispersionnames)
+	s = "Dispersion:"
+	for i = 1:length(dispersionnames)
+		s *= " " * axisnames[i] * " - "
+		s *= dispersionnames[i] == "b" ? "brownian" : "fractional"
+	end
+	return s
+end
+function getlongsources(sourcenames)
+	s = "Source:"
+	for i = 1:length(sourcenames)
+		s *= " " * axisnames[i] * " - "
+		s *= sourcenames[i] == "b" ? "constrained" : "dispersed"
+	end
+	return s
+end
+function getlongboundaries(boundarynames)
+	s = "Boundaries:"
+	for i = 1:length(boundarynames)
+		s *= " " * axisnames[i] * " - "
+		s *= boundarynames[i] == "b" ? "infinite" : boundarynames[i] == "r" ? "reflecting" : "absorbing"
+	end
+	return s
 end
 
 #the functions defined in this monstrosity of loops are for backwards compatibility
@@ -83,8 +109,11 @@ for n = 1:maxnumberofdimensions
 					Hs = parse(string("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
 					xbs = parse(string("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
 					dispersions = getdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
+					docdispersions = getlongdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
 					sources = getsources(@ntuple numberofdimensions ii->sourcenames[k_ii])
+					docsources = getlongsources(@ntuple numberofdimensions ii->sourcenames[k_ii])
 					boundaries = getboundaries(@ntuple numberofdimensions ii->boundarynames[j_ii])
+					docboundaries = getlongboundaries(@ntuple numberofdimensions ii->boundarynames[j_ii])
 					q.args[2].args[2].args[2] = :(innerkernel(Val{$numberofdimensions}, x, tau, $x0s, $sigma0s, $vs, $sigmas, $Hs, $xbs, $dispersions, $sources, $boundaries, nothing))
 					for i = 1:numberofdimensions
 						q.args[2].args[1].args = [q.args[2].args[1].args; Symbol("x0$(i)"); Symbol("sigma0$(i)"); Symbol("v$(i)"); Symbol("sigma$(i)"); Symbol("H$(i)"); Symbol("xb$(i)")]
@@ -118,6 +147,12 @@ for n = 1:maxnumberofdimensions
 					continuousreleaseargs[2] = Symbol("t")
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
+					qdoc = quote
+						@doc """$($(Symbol(string("long_", shortfunctionname, "_ckernel")))): kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+						@doc """$($(Symbol(string("long_", shortfunctionname, "_c")))): continuous contaminant release with unit strength\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						@doc """$($(Symbol(string("long_", shortfunctionname, "_cf")))): continuous contaminant release\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+					end
+					eval(qdoc)
 				end
 			end
 		end
