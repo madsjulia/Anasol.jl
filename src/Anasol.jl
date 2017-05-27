@@ -82,7 +82,7 @@ function getlongsources(sourcenames)
 	return s
 end
 function getlongboundaries(boundarynames)
-	s = "Boundaries:"
+	s = "Boundary:"
 	for i = 1:length(boundarynames)
 		s *= " " * axisnames[i] * " - "
 		s *= boundarynames[i] == "b" ? "infinite" : boundarynames[i] == "r" ? "reflecting" : "absorbing"
