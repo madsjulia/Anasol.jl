@@ -35,9 +35,9 @@ LA-CC-15-080; Copyright Number Assigned: C16008
 """
 module Anasol
 
-using Distributions
 using Base.Cartesian
-using MetaProgTools
+import Distributions
+import MetaProgTools
 
 include("newanasol.jl")
 
@@ -148,9 +148,11 @@ for n = 1:maxnumberofdimensions
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 					qdoc = quote
-						@doc """$($(Symbol(string("long_", shortfunctionname, "_ckernel")))): kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
-						@doc """$($(Symbol(string("long_", shortfunctionname, "_c")))): continuous contaminant release with unit strength\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$($(Symbol(string("long_", shortfunctionname, "_cf")))): continuous contaminant release\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						# $($(Symbol(string("long_", shortfunctionname, "_c")))):
+						@doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+
+						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with unit strength\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						@doc """$($(numberofdimensions))-dimensional continuous contaminant release\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_cf")))
 					end
 					eval(qdoc)
 				end
