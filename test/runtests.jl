@@ -114,7 +114,7 @@ end
 		dx = 250.
 		dy = 100.
 		dz = 1.
-		f = 50000
+		flux = 50000
 		t0 = 1985
 		wellx = 1250.
 		welly = 0.
@@ -123,8 +123,8 @@ end
 		for t = linspace(2016, 2035, 20)
 			for j = 1:length(t1s)
 				t1 = t1s[j]
-				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t) +
-					contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, t))
+				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, flux, t0, t1, t) +
+					contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, flux, t0, t1, t))
 			end
 			for j = 1:length(t1s) - 1
 				@Base.Test.test results[j] <= results[j + 1]
