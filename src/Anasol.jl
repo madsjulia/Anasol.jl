@@ -43,6 +43,24 @@ include("newanasol.jl")
 
 const standardnormal = Distributions.Normal(0, 1)
 
+docarguments = """Arguments:
+
+- `t`: time to compute the concentration
+- `x`: spatial coordinates of the point to compute the concentration
+- `x01`/`x02`/`x03`: contaminant source coordinates
+- `sigma01`/`sigma02`/`sigma01`: contaminant source sizes (if a constrained source) or standard deviations (if a distributed source)
+- `t0`/`t1`: contaminant release times (source is released  between `t0` and `t1`)
+- `v1`/`v2`/`v3`: groundwater flow velocity components
+- `sigma1`/`sigma2`/`sigma3`: groundwater flow dispersion components
+- `lambda`: half-life contaminant decay
+- `H1`/`H2`/`H3`: Hurst coefficients in the case of Brownian dispersion
+- `xb1`/`xb2`/`xb3`: locations of the domain boundaries
+
+Returns:
+
+- contaminant concentration at location `x` at time `t`
+"""
+
 function inclosedinterval(x, a, b)
 	return x >= a && x <= b
 end
@@ -149,10 +167,10 @@ for n = 1:maxnumberofdimensions
 					eval(qcf)
 					qdoc = quote
 						# $($(Symbol(string("long_", shortfunctionname, "_c")))):
-						@doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+						@doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
 
-						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with unit strength\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$($(numberofdimensions))-dimensional continuous contaminant release\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
 					end
 					eval(qdoc)
 				end
