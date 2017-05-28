@@ -118,9 +118,9 @@ function infinitedomainexpr(S, i)
 	distsym = symbolindex("dist", i)
 	sigmatsym = symbolindex("sigmat", i)
 	if S == :dispersed
-		return :(pdf($distsym,((point - x0[$i]) - v[$i] * tau) / $sigmatsym) / $sigmatsym)
+		return :(Distributions.pdf($distsym,((point - x0[$i]) - v[$i] * tau) / $sigmatsym) / $sigmatsym)
 	elseif S == :box
-		return :((cdf($distsym,(((point - x0[$i]) - v[$i] * tau) + 0.5 * sigma0[$i]) / $sigmatsym) - cdf($distsym,(((point - x0[$i]) - v[$i] * tau) - 0.5 * sigma0[$i]) / $sigmatsym)) / sigma0[$i])
+		return :((Distributions.cdf($distsym,(((point - x0[$i]) - v[$i] * tau) + 0.5 * sigma0[$i]) / $sigmatsym) - Distributions.cdf($distsym,(((point - x0[$i]) - v[$i] * tau) - 0.5 * sigma0[$i]) / $sigmatsym)) / sigma0[$i])
 	else
 		error("Unknown source type: $S")
 	end

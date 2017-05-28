@@ -1,7 +1,7 @@
-doc"""
+"""
 `gen_code` rejigs the standard julia `@generate` macro so that it creates a `code`
-expression variable that can be extended using the `@code` macro.  At the end of
-the function it automatically outputs the result.
+expression variable that can be extended using the `@code` macro.
+At the end of the function it automatically outputs the result.
 """
 macro gen_code(f)
   #make sure this macro precedes a function definition.
@@ -25,7 +25,7 @@ function __append_code(a, b)
   return :($a; $b)
 end
 
-doc"""
+"""
 `code` the code macro is used to put a line of code (or a quote) onto the growing
 gen_code function.
 """
