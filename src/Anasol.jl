@@ -53,7 +53,7 @@ docarguments = """Arguments:
 - `v1`/`v2`/`v3`: groundwater flow velocity components
 - `sigma1`/`sigma2`/`sigma3`: groundwater flow dispersion components
 - `lambda`: half-life contaminant decay
-- `H1`/`H2`/`H3`: Hurst coefficients in the case of Brownian dispersion
+- `H1`/`H2`/`H3`: Hurst coefficients in the case of fractional Brownian dispersion
 - `xb1`/`xb2`/`xb3`: locations of the domain boundaries
 
 Returns:
