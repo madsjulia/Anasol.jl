@@ -1,5 +1,6 @@
 __precompile__()
 
+import DocumentFunction
 import QuadGK
 import Compat
 import Compat.string
@@ -166,7 +167,7 @@ for n = 1:maxnumberofdimensions
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 					qdoc = quote
-						# $($(Symbol(string("long_", shortfunctionname, "_c")))):
+						# @doc """DocumentFunction(eval($($(Symbol(string("long_", shortfunctionname, "_c"))))))""" $(Symbol(string("long_", shortfunctionname, "_c")))
 						@doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
 
 						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
