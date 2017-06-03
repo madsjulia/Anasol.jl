@@ -1,10 +1,5 @@
 __precompile__()
 
-import DocumentFunction
-import QuadGK
-import Compat
-import Compat.string
-
 """
 MADS: Model Analysis & Decision Support in Julia (Mads.jl v1.0) 2016
 
@@ -39,6 +34,10 @@ module Anasol
 using Base.Cartesian
 import Distributions
 import MetaProgTools
+import DocumentFunction
+import QuadGK
+import Compat
+import Compat.string
 
 include("newanasol.jl")
 
