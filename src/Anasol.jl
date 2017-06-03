@@ -31,13 +31,13 @@ LA-CC-15-080; Copyright Number Assigned: C16008
 """
 module Anasol
 
-using Base.Cartesian
-import Distributions
 import MetaProgTools
 import DocumentFunction
+import Distributions
 import QuadGK
 import Compat
 import Compat.string
+using Base.Cartesian
 
 include("newanasol.jl")
 
@@ -195,7 +195,6 @@ for n = 1:maxnumberofdimensions
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 					qdoc = quote
-						import DocumentFunction
 						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
 						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
 						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
