@@ -44,12 +44,13 @@ include("newanasol.jl")
 
 const standardnormal = Distributions.Normal(0, 1)
 
-docarguments = """Arguments:
+docarguments = """Arguments
 
-- `t`: time to compute the concentration
+- `t`: time to compute concentration
 - `x`: spatial coordinates of the point to compute the concentration
 - `x01`/`x02`/`x03`: contaminant source coordinates
 - `sigma01`/`sigma02`/`sigma01`: contaminant source sizes (if a constrained source) or standard deviations (if a distributed source)
+- `sourcestrength`: user-provided function defining time-dependent source strength
 - `t0`/`t1`: contaminant release times (source is released  between `t0` and `t1`)
 - `v1`/`v2`/`v3`: groundwater flow velocity components
 - `sigma1`/`sigma2`/`sigma3`: groundwater flow dispersion components
@@ -61,6 +62,34 @@ Returns:
 
 - contaminant concentration at location `x` at time `t`
 """
+
+dictarguments = Dict(
+"t"=>"time to compute concentration",
+"x"=>"spatial coordinates of the point to compute the concentration",
+"x01"=>"`x` contaminant source coordinate",
+"x02"=>"`y` contaminant source coordinate",
+"x03"=>"`z` contaminant source coordinate",
+"sigma01"=>"`x` contaminant source size (if a constrained source) or standard deviation (if a distributed source)",
+"sigma02"=>"`y` contaminant source size (if a constrained source) or standard deviation (if a distributed source)",
+"sigma03"=>"`z` contaminant source size (if a constrained source) or standard deviation (if a distributed source)",
+"t0"=>"contaminant release start time",
+"t1"=>"contaminant release end time",
+"tau"=>"integration constant",
+"v1"=>"`x` groundwater flow velocity",
+"v2"=>"`y` groundwater flow velocity",
+"v3"=>"`z` groundwater flow velocity",
+"sigma1"=>"`x` groundwater flow dispersion",
+"sigma2"=>"`y` groundwater flow dispersion",
+"sigma3"=>"`z` groundwater flow dispersion",
+"sourcestrength"=>"user-provided function defining time-dependent source strength",
+"lambda"=>"half-life contaminant decay",
+"H1"=>"`x` Hurst coefficients in the case of fractional Brownian dispersion",
+"H2"=>"`y` Hurst coefficients in the case of fractional Brownian dispersion",
+"H3"=>"`z` Hurst coefficients in the case of fractional Brownian dispersion",
+"xb1"=>"`x` location of the domain boundary",
+"xb2"=>"`y` location of the domain boundary",
+"xb3"=>"`z` location of the domain boundary",
+)
 
 function inclosedinterval(x, a, b)
 	return x >= a && x <= b
@@ -167,11 +196,13 @@ for n = 1:maxnumberofdimensions
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 					qdoc = quote
-						# @doc """DocumentFunction(eval($($(Symbol(string("long_", shortfunctionname, "_c"))))))""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
-
-						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						import DocumentFunction
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						# @doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
 					end
 					eval(qdoc)
 				end
