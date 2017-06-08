@@ -82,9 +82,9 @@ dictarguments = Dict(
 "sigma3"=>"`z` groundwater flow dispersion",
 "sourcestrength"=>"user-provided function defining time-dependent source strength",
 "lambda"=>"half-life contaminant decay",
-"H1"=>"`x` Hurst coefficients in the case of fractional Brownian dispersion",
-"H2"=>"`y` Hurst coefficients in the case of fractional Brownian dispersion",
-"H3"=>"`z` Hurst coefficients in the case of fractional Brownian dispersion",
+"H1"=>"`x` Hurst coefficient in the case of fractional Brownian dispersion",
+"H2"=>"`y` Hurst coefficient in the case of fractional Brownian dispersion",
+"H3"=>"`z` Hurst coefficient in the case of fractional Brownian dispersion",
 "xb1"=>"`x` location of the domain boundary",
 "xb2"=>"`y` location of the domain boundary",
 "xb3"=>"`z` location of the domain boundary",
@@ -117,6 +117,7 @@ function getlongdispersions(dispersionnames)
 	for i = 1:length(dispersionnames)
 		s *= " " * axisnames[i] * " - "
 		s *= dispersionnames[i] == "b" ? "brownian" : "fractional"
+		s *= " ($(dispersionnames[i]))"
 	end
 	return s
 end
@@ -125,6 +126,7 @@ function getlongsources(sourcenames)
 	for i = 1:length(sourcenames)
 		s *= " " * axisnames[i] * " - "
 		s *= sourcenames[i] == "b" ? "constrained" : "dispersed"
+		s *= " ($(sourcenames[i]))"
 	end
 	return s
 end
@@ -133,6 +135,7 @@ function getlongboundaries(boundarynames)
 	for i = 1:length(boundarynames)
 		s *= " " * axisnames[i] * " - "
 		s *= boundarynames[i] == "b" ? "infinite" : boundarynames[i] == "r" ? "reflecting" : "absorbing"
+		s *= " ($(boundarynames[i]))"
 	end
 	return s
 end
@@ -195,10 +198,9 @@ for n = 1:maxnumberofdimensions
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
 					qdoc = quote
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source\n\n$($(docsources))\n\n$($(docboundaries))\n\n$($(docdispersions))"))""" $(Symbol(string("long_", shortfunctionname)))
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel\n\n$($(docsources))\n\n$($(docboundaries))\n\n$($(docdispersions))"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n\n$($(docsources))\n\n$($(docboundaries))\n\n$($(docdispersions))"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function\n\n$($(docsources))\n\n$($(docboundaries))\n\n$($(docdispersions))"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
 						# @doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
 						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
 						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
