@@ -44,7 +44,7 @@ function kernel_cf(dimtype, x::Vector, t::Real, x0::Vector, sigma0::Vector, v::V
 	end
 end
 
-@gen_code function innerkernel{dimensions,dispersions,sources,boundaries}(dimtype::Type{Val{dimensions}}, x::Vector, tau::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, ::Type{Val{dispersions}}, ::Type{Val{sources}}, ::Type{Val{boundaries}}, distributions)
+@gen_code function innerkernel(dimtype::Type{Val{dimensions}}, x::Vector, tau::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, ::Type{Val{dispersions}}, ::Type{Val{sources}}, ::Type{Val{boundaries}}, distributions) where {dimensions,dispersions,sources,boundaries}
 	if dimensions <= 0
 		error("Dimensions must be positive")
 	end
