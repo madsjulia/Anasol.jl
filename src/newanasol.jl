@@ -15,7 +15,7 @@ function cinnerkernel(dimtype, x, tau, x0, sigma0, v, sigma, H, xb, lambda, t0, 
 end
 
 function quadgkwithtol(f, a, b)
-	return QuadGK.quadgk(f, a, b; rtol=1.0e-7, atol=1e-4)[1]
+	return QuadGK.quadgk(f, a, b; rtol=1.0e-7, atol=1e-8)[1]
 end
 
 function kernel_c(x::Vector, t::Real, x0::Vector, sigma0::Vector, v::Vector, sigma::Vector, H::Vector, xb::Vector, lambda::Real, t0::Real, t1::Real, dispersions, sources, boundaries, distributions=nothing)
