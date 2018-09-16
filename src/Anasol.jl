@@ -43,6 +43,8 @@ include("newanasol.jl")
 
 const standardnormal = Distributions.Normal(0, 1)
 
+documentation = false
+
 docarguments = """Arguments
 
 - `t`: time to compute concentration
@@ -197,15 +199,17 @@ for n = 1:maxnumberofdimensions
 					continuousreleaseargs[2] = Symbol("t")
 					qcf.args[2].args[1].args = [qcf.args[2].args[1].args[1]; continuousreleaseargs[1:end]...; :(sourcestrength::Function)] # give it the correct set of arguments
 					eval(qcf)
-					qdoc = quote
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
-						# @doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
-						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
-						# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+					if documentation
+						qdoc = quote
+							@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_ckernel")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional contaminant source kernel\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+							@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_c")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+							@doc """$(DocumentFunction.documentfunction($(eval(Symbol(string("long_", shortfunctionname, "_cf")))), argtext=dictarguments, maintext="$($(numberofdimensions))-dimensional continuous contaminant release with a user-provided flux function\n\n$($(docdispersions))\n\n$($(docsources))\n\n$($(docboundaries))"))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+							# @doc """$($(numberofdimensions))-dimensional contaminant source kernel \n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_ckernel")))
+							# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a unit flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_c")))
+							# @doc """$($(numberofdimensions))-dimensional continuous contaminant release with a given flux\n- $($(docsources))\n- $($(docdispersions))\n- $($(docboundaries))\n$($(docarguments))""" $(Symbol(string("long_", shortfunctionname, "_cf")))
+						end
+						eval(qdoc)
 					end
-					eval(qdoc)
 				end
 			end
 		end
