@@ -2,6 +2,5 @@ julia 0.6
 QuadGK
 Distributions
 MetaProgTools
-JLD
 Compat 0.7.15
 DocumentFunction
