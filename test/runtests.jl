@@ -1,13 +1,15 @@
 import Anasol
-import Base.Test
+import LinearAlgebra
+import DelimitedFiles
+import Test
 
-if !isdefined(Symbol("@stderrcapture"))
+if !isdefined(Base, Symbol("@stderrcapture"))
 	macro stderrcapture(block)
 		quote
 			if ccall(:jl_generating_output, Cint, ()) == 0
-				errororiginal = STDERR;
+				errororiginal = Base.stderr;
 				(errR, errW) = redirect_stderr();
-				errorreader = @async readstring(errR);
+				errorreader = @async read(errR, String);
 				evalvalue = $(esc(block))
 				redirect_stderr(errororiginal);
 				close(errW);
@@ -45,7 +47,7 @@ end
 
 #a test using results that were verified against results from the C version of Mads/Anasol
 @stderrcapture function testmadsc(anasolfunctionname)
-	anasolfunction = eval(parse("Anasol.$anasolfunctionname"))
+	anasolfunction = eval(Meta.parse("Anasol.$anasolfunctionname"))
 	resultsdir = string(dirname(Base.source_path()), "/goodresults")
 	x, y, z = 1000, 1450, 0
 	porosity = 0.1
@@ -57,17 +59,17 @@ end
 	f = 50.
 	t0, t1 = [5., 15.]
 	wellx, welly, wellz = [823., 1499., 3.]
-	ts = linspace(1., 50., 50)
-	results = Array{Float64}(length(ts))
+	ts = range(1.; stop=50., length=50)
+	results = Array{Float64}(undef, length(ts))
 	for i = 1:length(ts)
 		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end
-	# writedlm("$resultsdir/$anasolfunctionname.dat", results)
-	goodresults = readdlm("$resultsdir/$anasolfunctionname.dat")
-	return norm(results - goodresults)
+	# DelimitedFiles.writedlm("$resultsdir/$anasolfunctionname.dat", results)
+	goodresults = DelimitedFiles.readdlm("$resultsdir/$anasolfunctionname.dat")
+	return LinearAlgebra.norm(results - goodresults)
 end
 
-@Base.Test.testset "Anasol" begin
+@Test.testset "Anasol" begin
 	x01, x02, x03 = 5., 3.14, 2.72
 	x0 = [x01, x02, x03]
 	sigma01, sigma02, sigma03 = 1., 10., .1
@@ -80,16 +82,16 @@ end
 	t0, t1 = 0.5, sqrt(2)
 	sourcestrength(t) = (Anasol.inclosedinterval(t, t0, t1) ? 1. : 0.)
 
-	ts = linspace(0, 2, 100)
+	ts = range(0; stop=2, length=100)
 	for t in ts
 		for i = 1:1000
 			x = x0 + v * t + 10 * randn(length(x0))
-			@Base.Test.test Anasol.long_bbb_ddd_iir_cf(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1, sourcestrength) == Anasol.long_bbb_ddd_iir_c(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1)
+			@Test.test Anasol.long_bbb_ddd_iir_cf(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1, sourcestrength) == Anasol.long_bbb_ddd_iir_c(x, t, x01, sigma01, v1, sigma1, H1, xb1, x02, sigma02, v2, sigma2, H2, xb2, x03, sigma03, v3, sigma3, H3, xb3, lambda, t0, t1)
 		end
 	end
 
 	t1s = collect(2015:5:2030)
-	results = Array{Float64}(length(t1s))
+	results = Array{Float64}(undef, length(t1s))
 	for i = 1:100
 		n = 0.1
 		lambda = 0.
@@ -113,21 +115,21 @@ end
 		welly = 0.
 		wellz0 = 3.
 		wellz1 = 3.
-		for t = linspace(2016, 2035, 20)
+		for t = range(2016; stop=2035, length=20)
 			for j = 1:length(t1s)
 				t1 = t1s[j]
 				results[j] = .5 * (contamination(wellx, welly, wellz0, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, flux, t0, t1, t) +
 					contamination(wellx, welly, wellz1, n, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, flux, t0, t1, t))
 			end
 			for j = 1:length(t1s) - 1
-				@Base.Test.test results[j] <= results[j + 1]
+				@Test.test results[j] <= results[j + 1]
 			end
 		end
 	end
 
 	anasolfunctionnames = ["long_bbb_ddd_iir_c", "long_bbb_bbb_iir_c"]
 	for anasolfunctionname in anasolfunctionnames
-		@Base.Test.test isapprox(testmadsc(anasolfunctionname), 0.; atol=1e-10)
+		@Test.test isapprox(testmadsc(anasolfunctionname), 0.; atol=1e-10)
 	end
 	include("newtest.jl")
 end

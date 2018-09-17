@@ -35,6 +35,7 @@ import MetaProgTools
 import DocumentFunction
 import Distributions
 import QuadGK
+import DelimitedFiles
 import Compat
 import Compat.string
 using Base.Cartesian
@@ -154,12 +155,12 @@ for n = 1:maxnumberofdimensions
 					q = quote
 						$(Symbol(string("long_", shortfunctionname)))(x::Vector,tau) = 1
 					end
-					x0s = parse(string("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
-					sigma0s = parse(string("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
-					vs = parse(string("[", join(map(i->"v$i", 1:numberofdimensions), ",")..., "]"))
-					sigmas = parse(string("[", join(map(i->"sigma$i", 1:numberofdimensions), ",")..., "]"))
-					Hs = parse(string("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
-					xbs = parse(string("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
+					x0s = Meta.parse(string("[", join(map(i->"x0$i", 1:numberofdimensions), ",")..., "]"))
+					sigma0s = Meta.parse(string("[", join(map(i->"sigma0$i", 1:numberofdimensions), ",")..., "]"))
+					vs = Meta.parse(string("[", join(map(i->"v$i", 1:numberofdimensions), ",")..., "]"))
+					sigmas = Meta.parse(string("[", join(map(i->"sigma$i", 1:numberofdimensions), ",")..., "]"))
+					Hs = Meta.parse(string("[", join(map(i->"H$i", 1:numberofdimensions), ",")..., "]"))
+					xbs = Meta.parse(string("[", join(map(i->"xb$i", 1:numberofdimensions), ",")..., "]"))
 					dispersions = getdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
 					docdispersions = getlongdispersions(@ntuple numberofdimensions ii->dispersionnames[i_ii])
 					sources = getsources(@ntuple numberofdimensions ii->sourcenames[k_ii])
