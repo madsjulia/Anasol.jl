@@ -218,4 +218,22 @@ for n = 1:maxnumberofdimensions
 	eval(bigq)
 end
 
+"""
+Make documentation
+
+$(DocumentFunction.documentfunction(documentationon))
+"""
+function documentationon()
+	global documentation = true;
+end
+
+"""
+Do not make documentation
+
+$(DocumentFunction.documentfunction(documentationoff))
+"""
+function documentationoff()
+	global documentation = false;
+end
+
 end
