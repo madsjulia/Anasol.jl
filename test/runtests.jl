@@ -1,5 +1,4 @@
 import Anasol
-import JLD
 import Base.Test
 
 if !isdefined(Symbol("@stderrcapture"))
@@ -63,15 +62,9 @@ end
 	for i = 1:length(ts)
 		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end
-	@JLD.load "$resultsdir/$anasolfunctionname.jld" goodresults
+	# writedlm("$resultsdir/$anasolfunctionname.dat", results)
+	goodresults = readdlm("$resultsdir/$anasolfunctionname.dat")
 	return norm(results - goodresults)
-	#=
-	goodresults = Array{Float64}(length(ts))
-	for i = 1:length(ts)
-		goodresults[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
-	end
-	@JLD.save "$resultsdir/$anasolfunctionname.jld" goodresults
-	=#
 end
 
 @Base.Test.testset "Anasol" begin
