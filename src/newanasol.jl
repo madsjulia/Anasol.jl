@@ -71,7 +71,7 @@ end
 function distributionexprs(distributions::Type{Nothing}, dimensions::Int)
 	distexprs = Array{Expr}(undef, dimensions)
 	for i = 1:dimensions
-		distexprs[i] = :(const $(Symbol(string("dist", i))) = Anasol.standardnormal)
+		distexprs[i] = :($(Symbol(string("dist", i))) = Anasol.standardnormal)
 	end
 	return distexprs
 end
@@ -79,7 +79,7 @@ end
 function distributionexprs(distributions, dimensions)
 	distexprs = Array{Expr}(undef, dimensions)
 	for i = 1:dimensions
-		distexprs[i] = :(const $(Symbol(string("dist", i))) = distributions[$i])
+		distexprs[i] = :($(Symbol(string("dist", i))) = distributions[$i])
 	end
 	return distexprs
 end
