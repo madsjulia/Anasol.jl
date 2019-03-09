@@ -60,7 +60,7 @@ end
 	t0, t1 = [5., 15.]
 	wellx, welly, wellz = [823., 1499., 3.]
 	ts = range(1.; stop=50., length=50)
-	results = Array{Float64}(undef, length(ts))
+	global results = Array{Float64}(undef, length(ts))
 	for i = 1:length(ts)
 		results[i] = contamination(wellx, welly, wellz, porosity, lambda, theta, vx, vy, vz, ax, ay, az, H, x, y, z, dx, dy, dz, f, t0, t1, ts[i]; anasolfunction=anasolfunction)
 	end
@@ -71,7 +71,7 @@ end
 
 @Test.testset "Anasol" begin
 	x01, x02, x03 = 5., 3.14, 2.72
-	x0 = [x01, x02, x03]
+	global x0 = [x01, x02, x03]
 	sigma01, sigma02, sigma03 = 1., 10., .1
 	v1, v2, v3 = 2.5, 0.3, 0.01
 	v = [v1, v2, v3]
@@ -91,7 +91,7 @@ end
 	end
 
 	t1s = collect(2015:5:2030)
-	results = Array{Float64}(undef, length(t1s))
+	global results = Array{Float64}(undef, length(t1s))
 	for i = 1:100
 		n = 0.1
 		lambda = 0.
