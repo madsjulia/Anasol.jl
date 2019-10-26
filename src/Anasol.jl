@@ -36,8 +36,6 @@ import DocumentFunction
 import Distributions
 import QuadGK
 import DelimitedFiles
-import Compat
-import Compat.string
 using Base.Cartesian
 
 include("newanasol.jl")
