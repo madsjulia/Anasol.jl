@@ -1,6 +1,6 @@
 name = "Anasol"
 uuid = "fd9e7046-df80-5870-8bf6-b6b2342464ec"
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
