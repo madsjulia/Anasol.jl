@@ -1,10 +1,6 @@
 Anasol
 =======================================
 
-[![Anasol](http://pkg.julialang.org/badges/Anasol_0.5.svg)](http://pkg.julialang.org/?pkg=Anasol&ver=0.5)
-[![Anasol](http://pkg.julialang.org/badges/Anasol_0.6.svg)](http://pkg.julialang.org/?pkg=Anasol&ver=0.6)
-[![Anasol](http://pkg.julialang.org/badges/Anasol_0.7.svg)](http://pkg.julialang.org/?pkg=Anasol&ver=0.7)
-[![Build Status](https://travis-ci.org/madsjulia/Anasol.jl.svg?branch=master)](https://travis-ci.org/madsjulia/Anasol.jl)
 [![Coverage Status](https://coveralls.io/repos/madsjulia/Anasol.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Anasol.jl?branch=master)
 
 (Analytical solutions for groundwater contaminant transport.
