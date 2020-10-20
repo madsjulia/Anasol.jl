@@ -3,7 +3,7 @@ Anasol
 
 [![Coverage Status](https://coveralls.io/repos/madsjulia/Anasol.jl/badge.svg?branch=master)](https://coveralls.io/r/madsjulia/Anasol.jl?branch=master)
 
-(Analytical solutions for groundwater contaminant transport.
+Analytical solutions for groundwater contaminant transport.
 Anasol is a module of [MADS](http://madsjulia.github.io/Mads.jl).
 
 MADS
