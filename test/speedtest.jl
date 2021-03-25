@@ -15,7 +15,7 @@ function speedtest(N)
 	xb = [xb1, xb2, xb3]
 	lambda = 0.01
 	t0, t1 = 0.5, sqrt(2)
-	ts = linspace(0, 2, 100)
+	ts = range(0, 2; length=100)
 	t = ts[1]
 	x = x0 + v * t + 10 * randn(length(x0))
 	xs = 5 * rand(length(x0), N)
