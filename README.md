@@ -111,9 +111,20 @@ Developers
 
 * [Velimir (monty) Vesselinov](https://montyv.github.io) [(publications)](http://scholar.google.com/citations?user=sIFHVvwAAAAJ)
 * [Daniel O'Malley](http://www.lanl.gov/expertise/profiles/view/daniel-o'malley) [(publications)](http://scholar.google.com/citations?user=rPzCVjEAAAAJ)
-* [see also](https://github.com/madsjulia/Anasol.jl/graphs/contributors)
 
-Publications, Presentations, Projects
-=====================================
+Projects:
+---------
 
-* [montyv.github.io/](https://montyv.github.io/)
+* [MADS](https://github.com/madsjulia)
+* [SmartTensors](https://github.com/SmartTensors)
+* [SmartML](https://github.com/SmartTensors/SmartML.jl)
+
+Publications, Presentations
+--------------------------
+
+* [mads.gitlab.io](http://mads.gitlab.io)
+* [madsjulia.github.io](https://madsjulia.github.io)
+* [SmartTensors](https://SmartTensors.github.io)
+* [SmartTensors.com](https://SmartTensors.com)
+* [monty.gitlab.io](http://monty.gitlab.io)
+* [montyv.github.io](https://montyv.github.io)
